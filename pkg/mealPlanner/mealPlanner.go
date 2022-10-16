@@ -6,36 +6,36 @@ import (
 	"os"
 
 	"github.com/jomei/notionapi"
+	"github.com/rs/zerolog/log"
 )
 
 func Plan() {
 	notionToken := notionapi.Token(os.Getenv("NOTION_TOKEN"))
-	fmt.Fprintf(os.Stdout, "'%s' \n", notionToken)
+	log.Debug().Msgf("'%s' \n", notionToken)
 
 	client := notionapi.NewClient(notionToken)
 
-	fmt.Println("Client Created")
+	log.Debug().Msg("Client Created")
+	fmt.Println()
 
 	getRecipes(*client)
 }
 
 func ListRecipes() {
 	notionToken := notionapi.Token(os.Getenv("NOTION_TOKEN"))
-	fmt.Fprintf(os.Stdout, "'%s' \n", notionToken)
-
 	client := notionapi.NewClient(notionToken)
 
-	fmt.Println("Client Created")
+	log.Debug().Msg("Client Created")
 
 	recipes := getRecipes(*client)
 
 	for index, recipe := range recipes {
-		fmt.Printf("%+v\n", recipe)
+		log.Debug().Msgf("%+v\n", recipe)
 		if recipeNameProperty, ok := recipe.Properties["Name"].(*notionapi.TitleProperty); ok {
 			recipeName := recipeNameProperty.Title[0].PlainText
-			fmt.Println(index+1, "-", recipeName)
+			fmt.Printf("%d. %s \n", index+1, recipeName)
 		} else {
-			fmt.Fprintf(os.Stderr, "There was an error getting the recipe name")
+			log.Error().Msg("There was an error getting the recipe name")
 		}
 
 	}
@@ -47,12 +47,12 @@ func getRecipes(client notionapi.Client) []notionapi.Page {
 	query := new(notionapi.DatabaseQueryRequest)
 	recipesDb, err := client.Database.Query(context.Background(), recipesDbId, query)
 	if err != nil {
-		fmt.Println("Error while getting db")
+		log.Error().Msg("Error while getting db")
 
 		// do something
 	}
 
-	fmt.Printf("%+v\n", recipesDb.Results)
+	log.Debug().Msgf("%+v\n", recipesDb.Results)
 
 	return recipesDb.Results
 }
