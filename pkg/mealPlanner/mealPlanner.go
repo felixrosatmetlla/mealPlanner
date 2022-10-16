@@ -15,6 +15,33 @@ func Plan() {
 	client := notionapi.NewClient(notionToken)
 
 	fmt.Println("Client Created")
+
+	getRecipes(*client)
+}
+
+func ListRecipes() {
+	notionToken := notionapi.Token(os.Getenv("NOTION_TOKEN"))
+	fmt.Fprintf(os.Stdout, "'%s' \n", notionToken)
+
+	client := notionapi.NewClient(notionToken)
+
+	fmt.Println("Client Created")
+
+	recipes := getRecipes(*client)
+
+	for index, recipe := range recipes {
+		fmt.Printf("%+v\n", recipe)
+		if recipeNameProperty, ok := recipe.Properties["Name"].(*notionapi.TitleProperty); ok {
+			recipeName := recipeNameProperty.Title[0].PlainText
+			fmt.Println(index+1, "-", recipeName)
+		} else {
+			fmt.Fprintf(os.Stderr, "There was an error getting the recipe name")
+		}
+
+	}
+}
+
+func getRecipes(client notionapi.Client) []notionapi.Page {
 	recipesDbId := notionapi.DatabaseID(os.Getenv("RECIPES_DB_ID"))
 
 	query := new(notionapi.DatabaseQueryRequest)
@@ -26,4 +53,6 @@ func Plan() {
 	}
 
 	fmt.Printf("%+v\n", recipesDb.Results)
+
+	return recipesDb.Results
 }
