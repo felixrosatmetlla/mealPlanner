@@ -9,6 +9,7 @@ import (
 )
 
 func main() {
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	mealPlanner.Execute()
 }
