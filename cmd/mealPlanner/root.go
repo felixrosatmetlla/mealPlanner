@@ -8,7 +8,7 @@ import (
 )
 
 var version = "0.0.1"
-
+var tags []string
 var rootCmd = &cobra.Command{
 	Use:     "mealPlanner",
 	Version: version,
@@ -18,6 +18,8 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
+	rootCmd.PersistentFlags().StringArrayVarP(&tags, "tags", "t", *new([]string), "tags to filter")
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "There was an error executing the CLI '%s'", err)
 		os.Exit(1)

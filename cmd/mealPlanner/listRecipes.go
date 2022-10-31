@@ -10,7 +10,7 @@ var listRecipesCmd = &cobra.Command{
 	Aliases: []string{"listr"},
 	Short:   "List existing recipes",
 	Run: func(cmd *cobra.Command, args []string) {
-		mealPlanner.ListRecipes()
+		mealPlanner.ListRecipes(tags)
 	},
 }
 
