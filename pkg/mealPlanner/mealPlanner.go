@@ -3,7 +3,9 @@ package mealPlanner
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/jomei/notionapi"
 	"github.com/rs/zerolog/log"
@@ -25,15 +27,14 @@ func Plan(tags []string) {
 		recipes = getRecipes(*client, "")
 	}
 
-	for index, recipe := range recipes {
-		log.Debug().Msgf("%+v\n", recipe)
-		if recipeNameProperty, ok := recipe.Properties["Name"].(*notionapi.TitleProperty); ok {
-			recipeName := recipeNameProperty.Title[0].PlainText
-			fmt.Printf("%d. %s \n", index+1, recipeName)
-		} else {
-			log.Error().Msg("There was an error getting the recipe name")
-		}
+	choosedRecipe := getRandomRecipe(recipes)
 
+	log.Debug().Msgf("%+v\n", choosedRecipe)
+	if recipeNameProperty, ok := choosedRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
+		recipeName := recipeNameProperty.Title[0].PlainText
+		fmt.Printf("Random receipe chosen: %s \n", recipeName)
+	} else {
+		log.Error().Msg("There was an error getting the recipe name")
 	}
 }
 
@@ -83,4 +84,13 @@ func getRecipes(client notionapi.Client, tag string) []notionapi.Page {
 	log.Debug().Msgf("%+v\n", recipesDb.Results)
 
 	return recipesDb.Results
+}
+
+func getRandomRecipe(recipes []notionapi.Page) notionapi.Page {
+	limitNumber := len(recipes)
+	rand.Seed(time.Now().UnixNano())
+
+	index := rand.Intn(limitNumber)
+
+	return recipes[index]
 }
