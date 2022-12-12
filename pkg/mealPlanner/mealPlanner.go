@@ -11,6 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type DayMeals struct {
+	Lunch  string
+	Dinner string
+}
+
 func Plan(tags []string) {
 	notionToken := notionapi.Token(os.Getenv("NOTION_TOKEN"))
 	log.Debug().Msgf("'%s' \n", notionToken)
@@ -35,6 +40,41 @@ func Plan(tags []string) {
 		fmt.Printf("Random receipe chosen: %s \n", recipeName)
 	} else {
 		log.Error().Msg("There was an error getting the recipe name")
+	}
+
+	var weekRecipes []DayMeals
+
+	for i := 0; i < 7; i++ {
+		lunchRecipes := getRecipes(*client, "Dinar")
+		dayLunchRecipe := getRandomRecipe(lunchRecipes)
+
+		var dayRecipes DayMeals
+
+		if recipeNameProperty, ok := dayLunchRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
+			recipeName := recipeNameProperty.Title[0].PlainText
+			dayRecipes.Lunch = recipeName
+			fmt.Printf("Random receipe chosen: %s \n", recipeName)
+		} else {
+			log.Error().Msg("There was an error getting the recipe name")
+		}
+
+		dinnerRecipes := getRecipes(*client, "Sopar")
+		dayDinnerRecipe := getRandomRecipe(dinnerRecipes)
+
+		if recipeNameProperty, ok := dayDinnerRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
+			recipeName := recipeNameProperty.Title[0].PlainText
+			dayRecipes.Dinner = recipeName
+			fmt.Printf("Random receipe chosen: %s \n", recipeName)
+		} else {
+			log.Error().Msg("There was an error getting the recipe name")
+		}
+
+		weekRecipes = append(weekRecipes, dayRecipes)
+	}
+
+	for index, dayMeals := range weekRecipes {
+		fmt.Printf("Day %d Lunch: %s \n", index, dayMeals.Lunch)
+		fmt.Printf("Day %d Dinner: %s \n", index, dayMeals.Dinner)
 	}
 }
 
