@@ -32,15 +32,11 @@ func Plan(tags []string) {
 		recipes = getRecipes(*client, "")
 	}
 
-	choosedRecipe := getRandomRecipe(recipes)
+	chosenRecipe := getRandomRecipe(recipes)
 
-	log.Debug().Msgf("%+v\n", choosedRecipe)
-	if recipeNameProperty, ok := choosedRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
-		recipeName := recipeNameProperty.Title[0].PlainText
-		fmt.Printf("Random receipe chosen: %s \n", recipeName)
-	} else {
-		log.Error().Msg("There was an error getting the recipe name")
-	}
+	log.Debug().Msgf("%+v\n", chosenRecipe)
+	recipeName := getRecipeName(chosenRecipe)
+	fmt.Printf("Random receipe chosen: %s \n", recipeName)
 
 	var weekRecipes []DayMeals
 
@@ -50,24 +46,14 @@ func Plan(tags []string) {
 
 		var dayRecipes DayMeals
 
-		if recipeNameProperty, ok := dayLunchRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
-			recipeName := recipeNameProperty.Title[0].PlainText
-			dayRecipes.Lunch = recipeName
-			fmt.Printf("Random receipe chosen: %s \n", recipeName)
-		} else {
-			log.Error().Msg("There was an error getting the recipe name")
-		}
+		recipeName := getRecipeName(dayLunchRecipe)
+		dayRecipes.Lunch = recipeName
 
 		dinnerRecipes := getRecipes(*client, "Sopar")
 		dayDinnerRecipe := getRandomRecipe(dinnerRecipes)
 
-		if recipeNameProperty, ok := dayDinnerRecipe.Properties["Name"].(*notionapi.TitleProperty); ok {
-			recipeName := recipeNameProperty.Title[0].PlainText
-			dayRecipes.Dinner = recipeName
-			fmt.Printf("Random receipe chosen: %s \n", recipeName)
-		} else {
-			log.Error().Msg("There was an error getting the recipe name")
-		}
+		recipeName = getRecipeName(dayDinnerRecipe)
+		dayRecipes.Dinner = recipeName
 
 		weekRecipes = append(weekRecipes, dayRecipes)
 	}
@@ -93,12 +79,8 @@ func ListRecipes(tags []string) {
 
 	for index, recipe := range recipes {
 		log.Debug().Msgf("%+v\n", recipe)
-		if recipeNameProperty, ok := recipe.Properties["Name"].(*notionapi.TitleProperty); ok {
-			recipeName := recipeNameProperty.Title[0].PlainText
-			fmt.Printf("%d. %s \n", index+1, recipeName)
-		} else {
-			log.Error().Msg("There was an error getting the recipe name")
-		}
+		recipeName := getRecipeName(recipe)
+		fmt.Printf("%d. %s \n", index+1, recipeName)
 
 	}
 }
@@ -124,6 +106,19 @@ func getRecipes(client notionapi.Client, tag string) []notionapi.Page {
 	log.Debug().Msgf("%+v\n", recipesDb.Results)
 
 	return recipesDb.Results
+}
+
+func getRecipeName(recipe notionapi.Page) string {
+	var recipeName string
+
+	if recipeNameProperty, ok := recipe.Properties["Name"].(*notionapi.TitleProperty); ok {
+		recipeName = recipeNameProperty.Title[0].PlainText
+
+	} else {
+		log.Error().Msg("There was an error getting the recipe name")
+	}
+
+	return recipeName
 }
 
 func getRandomRecipe(recipes []notionapi.Page) notionapi.Page {
