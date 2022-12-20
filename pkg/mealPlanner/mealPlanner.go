@@ -11,9 +11,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type Meal struct {
+	Id    string
+	Title string
+}
+
 type DayMeals struct {
-	Lunch  string
-	Dinner string
+	Lunch  Meal
+	Dinner Meal
 }
 
 func Plan(tags []string) {
@@ -47,21 +52,72 @@ func Plan(tags []string) {
 		var dayRecipes DayMeals
 
 		recipeName := getRecipeName(dayLunchRecipe)
-		dayRecipes.Lunch = recipeName
+		dayRecipes.Lunch.Title = recipeName
+		dayRecipes.Lunch.Id = string(dayLunchRecipe.ID)
 
 		dinnerRecipes := getRecipes(*client, "Sopar")
 		dayDinnerRecipe := getRandomRecipe(dinnerRecipes)
 
 		recipeName = getRecipeName(dayDinnerRecipe)
-		dayRecipes.Dinner = recipeName
+		dayRecipes.Dinner.Title = recipeName
+		dayRecipes.Dinner.Id = string(dayDinnerRecipe.ID)
 
 		weekRecipes = append(weekRecipes, dayRecipes)
 	}
 
-	for index, dayMeals := range weekRecipes {
-		fmt.Printf("Day %d Lunch: %s \n", index, dayMeals.Lunch)
-		fmt.Printf("Day %d Dinner: %s \n", index, dayMeals.Dinner)
+	fmt.Printf("Updating calendar page... \n")
+	calendarDbId := notionapi.DatabaseID(os.Getenv("MEALS_CALENDAR"))
+
+	query := new(notionapi.DatabaseQueryRequest)
+
+	calendarDb, err := client.Database.Query(context.Background(), calendarDbId, query)
+	if err != nil {
+		log.Error().Msg("Error while getting db")
+
+		// do something
 	}
+
+	log.Debug().Msgf("%+v\n", calendarDb.Results)
+
+	for index, dayMeals := range weekRecipes {
+		fmt.Printf("Day %d Lunch: %s \n", index, dayMeals.Lunch.Title)
+		fmt.Printf("Day %d Dinner: %s \n", index, dayMeals.Dinner.Title)
+
+		lunchRequest := new(notionapi.PageUpdateRequest)
+
+		var printedProperties = fmt.Sprintf(`{"Recepta": {"type":"relation", "relation": [{"id": "%s"}],"has_more": false}}`, dayMeals.Lunch.Id)
+		lunchRequest.Properties.UnmarshalJSON([]byte(printedProperties))
+
+		var lunchIndex = index * 2
+		var _, err = client.Page.Update(context.Background(), notionapi.PageID(calendarDb.Results[lunchIndex].ID), lunchRequest)
+		if err != nil {
+			log.Error().Msg("Error while getting db")
+
+			// do something
+		}
+
+		dinnerRequest := new(notionapi.PageUpdateRequest)
+		var dinnerProperties = fmt.Sprintf(`{"Recepta": {"type":"relation", "relation": [{"id": "%s"}],"has_more": false}}`, dayMeals.Dinner.Id)
+		dinnerRequest.Properties.UnmarshalJSON([]byte(dinnerProperties))
+
+		var dinnerIndex = index*2 + 1
+		var _, dinnerErr = client.Page.Update(context.Background(), notionapi.PageID(calendarDb.Results[dinnerIndex].ID), dinnerRequest)
+		if dinnerErr != nil {
+			log.Error().Msg("Error while getting db")
+
+			// do something
+		}
+	}
+
+	// var test, error = client.Database.Get(context.Background(), calendarDbId)
+	// log.Debug().Msgf("%+v\n", test)
+	// log.Debug().Msgf("%+v\n", error)
+	// var testPage, errorPage = client.Block.Get(context.Background(), test.Parent.BlockID)
+	// log.Debug().Msgf("%+v\n", testPage)
+	// log.Debug().Msgf("%+v\n", errorPage)
+	// request := new(notionapi.PageUpdateRequest)
+
+	// client.Page.Update(context.Background(), calendarDbId, request)
 }
 
 func ListRecipes(tags []string) {
