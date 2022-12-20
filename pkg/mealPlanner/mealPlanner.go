@@ -108,16 +108,6 @@ func Plan(tags []string) {
 			// do something
 		}
 	}
-
-	// var test, error = client.Database.Get(context.Background(), calendarDbId)
-	// log.Debug().Msgf("%+v\n", test)
-	// log.Debug().Msgf("%+v\n", error)
-	// var testPage, errorPage = client.Block.Get(context.Background(), test.Parent.BlockID)
-	// log.Debug().Msgf("%+v\n", testPage)
-	// log.Debug().Msgf("%+v\n", errorPage)
-	// request := new(notionapi.PageUpdateRequest)
-
-	// client.Page.Update(context.Background(), calendarDbId, request)
 }
 
 func ListRecipes(tags []string) {
